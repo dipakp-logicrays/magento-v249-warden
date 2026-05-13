@@ -1,0 +1,101 @@
+services:
+  php-fpm:
+    extra_hosts:
+      # Add additional storefront/admin hostnames here as your Luma demo grows, e.g.:
+      # - app.${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}
+      - ${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}
+      - app.${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}
+      - status.${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}
+    environment:
+      - COMPOSER_MEMORY_LIMIT=-1
+      - COMPOSER_PROCESS_TIMEOUT=3600
+    volumes:
+      - .:/var/www/html:cached
+      - ./.warden/php/zz-config.ini:/etc/php.d/zz-config.ini
+      - ./.warden/php-fpm/www.conf:/etc/php-fpm.d/www.conf
+  # php-debug:
+  #   volumes:
+  #     - ./.warden/php/zz-config.ini:/etc/php.d/zz-config.ini
+  nginx:
+    labels:
+      - traefik.http.routers.${WARDEN_ENV_NAME}-nginx.rule=
+          HostRegexp(`{subdomain:.+}.${TRAEFIK_DOMAIN}`)
+          || Host(`${TRAEFIK_DOMAIN}`)
+    volumes:
+      - ./.warden/nginx/custom.conf:/etc/nginx/default.d/custom.conf
+  db:
+    volumes:
+      - ${DB_DATA_PATH:-./dbdata}:/var/lib/mysql
+  # elasticsearch:
+  #   environment:
+  #     - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+  #     - "discovery.type=single-node"
+  #     - "xpack.security.enabled=false"
+  opensearch:
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.type=single-node"
+  # varnish:
+  #   labels:
+  #     - traefik.http.routers.${WARDEN_ENV_NAME}-varnish.rule=
+  #         HostRegexp(`{subdomain:.+}.${TRAEFIK_DOMAIN}`)
+  #         || Host(`${TRAEFIK_DOMAIN}`)
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025" # Web interface
+      - "1025:1025" # SMTP server
+    environment:
+      - MP_DATABASE=/data/mailpit.db
+      - MP_SMTP_AUTH_ACCEPT_ANY=1
+      - MP_SMTP_AUTH_ALLOW_INSECURE=1
+      - MP_MAX=500000
+    healthcheck:
+      test: /mailpit readyz
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ${MAILPIT_DATA_PATH:-./mailpitdata}:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${WARDEN_ENV_NAME}-mailpit.tls=true
+      - traefik.http.routers.${WARDEN_ENV_NAME}-mailpit.rule=Host(`mailpit.${TRAEFIK_DOMAIN}`)||Host(`mail.${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${WARDEN_ENV_NAME}-mailpit.loadbalancer.server.port=8025
+    restart: ${WARDEN_RESTART_POLICY:-always}
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports:
+      - "9000:9000"
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.portainer.tls=true
+      - traefik.http.routers.portainer.rule=Host(`portainer.${WARDEN_SERVICE_DOMAIN:-den.test}`)||Host(`portainer.warden.test`)
+      - traefik.http.services.portainer.loadbalancer.server.port=9000
+    restart: ${WARDEN_RESTART_POLICY:-always}
+  status:
+    build:
+      context: ./.warden/status
+      dockerfile: Dockerfile
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./.warden/status:/var/www/html:cached
+      - ./.env:/host/.env:ro
+      # Re-enable the mounts below after Magento install creates these files,
+      # otherwise Docker will mount them as empty directories and break the status panel.
+      # - ./composer.lock:/host/composer.lock:ro
+      # - ./app/etc/env.php:/host/app/etc/env.php:ro
+      # - ./.git:/host/.git:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${WARDEN_ENV_NAME}-status.tls=true
+      - traefik.http.routers.${WARDEN_ENV_NAME}-status.rule=Host(`status.${TRAEFIK_DOMAIN}`)
+      - traefik.http.services.${WARDEN_ENV_NAME}-status.loadbalancer.server.port=80
+    restart: ${WARDEN_RESTART_POLICY:-always}
+volumes:
+  portainer_data:
