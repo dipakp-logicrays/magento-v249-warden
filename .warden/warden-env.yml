@@ -93,9 +93,9 @@ services:
       - ./.env:/host/.env:ro
       # Re-enable the mounts below after Magento install creates these files,
       # otherwise Docker will mount them as empty directories and break the status panel.
-      # - ./composer.lock:/host/composer.lock:ro
-      # - ./app/etc/env.php:/host/app/etc/env.php:ro
-      # - ./.git:/host/.git:ro
+      - ./composer.lock:/host/composer.lock:ro
+      - ./app/etc/env.php:/host/app/etc/env.php:ro
+      - ./.git:/host/.git:ro
     labels:
       - traefik.enable=true
       - traefik.http.routers.${WARDEN_ENV_NAME}-status.tls=true
