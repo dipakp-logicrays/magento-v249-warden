@@ -23,6 +23,7 @@ A **Magento 2.4.9 Community Edition (Luma demo)** workspace running on [Warden](
 - [Documentation](#documentation)
 - [Repository layout](#repository-layout)
 - [Common Warden commands](#common-warden-commands)
+- [Generate test data](#generate-test-data)
 - [Host service helpers](#host-service-helpers)
   - [Stop conflicting host services](#stop-conflicting-host-services)
   - [Start Docker services](#start-docker-services)
@@ -48,6 +49,8 @@ Then jump to → **[docs/Installation-warden-setup.md](docs/Installation-warden-
 | Doc                                                                                 | What it covers                                                                                          |
 | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | [docs/Installation-warden-setup.md](docs/Installation-warden-setup.md)              | End-to-end Magento 2.4.9 install on Warden — prerequisites, install, configure, admin, troubleshooting. |
+| [docs/database-operations.md](docs/database-operations.md)                          | Daily DB operations: connection, backup/restore, import/export, Magento operations, troubleshooting.     |
+| [setup/performance-toolkit/profiles/ce/custom.xml](setup/performance-toolkit/profiles/ce/custom.xml) | Performance Toolkit profile tuned for the Luma demo (1k simple + 30 configurable + 20 bundle products, 50 categories, 500 customers, 200 orders). |
 | [CLAUDE.md](CLAUDE.md)                                                              | Quick reference for AI-assisted work in this repo (commands, conventions, doc map).                     |
 | [.claude/docs/](.claude/docs/)                                                      | Coding standards (PHP, JS/jQuery, LESS/HTML, technical, security/perf).                                 |
 
@@ -98,6 +101,36 @@ bin/magento setup:upgrade && bin/magento setup:di:compile
 bin/magento setup:static-content:deploy -f
 bin/magento indexer:reindex
 ```
+
+---
+
+## Generate test data
+
+This repo ships a Performance Toolkit profile tuned for the Luma demo at [`setup/performance-toolkit/profiles/ce/custom.xml`](setup/performance-toolkit/profiles/ce/custom.xml). Running it populates the catalog, customers, and orders without creating any extra websites/stores/store views.
+
+| Generated | Count |
+| --- | --- |
+| Simple products | 1,000 |
+| Configurable products | 30 (×24 variations each) |
+| Bundle products | 20 (3 options, 4 sub-products per option) |
+| Categories | 50 (3 nesting levels) |
+| Customers | 500 |
+| Orders | 200 |
+| Catalog/cart price rules + coupons | 20 each |
+| Admin users | 50 |
+
+```bash
+# From the host
+warden shell -c 'bin/magento setup:perf:generate-fixtures setup/performance-toolkit/profiles/ce/custom.xml && bin/magento indexer:reindex && bin/magento cache:flush'
+```
+
+The Performance Toolkit only generates **simple, configurable, and bundle** products. To also populate **grouped, virtual, and downloadable** products (plus their images, CMS pages, blocks, and theme assets), chain Magento's official sample data:
+
+```bash
+warden shell -c 'bin/magento sampledata:deploy && bin/magento setup:upgrade && bin/magento setup:di:compile && bin/magento setup:static-content:deploy -f && bin/magento indexer:reindex && bin/magento cache:flush'
+```
+
+> Tune the counts by editing the `<simple_products>`, `<configurable_products>`, `<bundle_products>`, `<categories>`, `<customers>`, `<orders>` nodes in `custom.xml`. The full schema is documented at the top of that file.
 
 ---
 

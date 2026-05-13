@@ -1,0 +1,165 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright 2015 Adobe
+ * All Rights Reserved.
+ */
+-->
+<!--
+    Custom profile for the m249 Luma demo.
+
+    Generates categories, simple/configurable/bundle products, customers, and
+    orders without creating extra websites/stores/store views (the existing
+    default scopes are reused).
+
+    Run from inside the php-fpm container:
+        bin/magento setup:perf:generate-fixtures \
+            setup/performance-toolkit/profiles/ce/custom.xml
+
+    Limitation: Magento's Performance Toolkit only ships fixtures for SIMPLE,
+    CONFIGURABLE, and BUNDLE products. To populate GROUPED, VIRTUAL and
+    DOWNLOADABLE products afterwards, run:
+        bin/magento sampledata:deploy && bin/magento setup:upgrade
+-->
+<config xmlns:xi="http://www.w3.org/2001/XInclude">
+    <profile>
+        <admin_users>50</admin_users><!-- Number of admin users to generate -->
+
+        <!--
+            Keep websites / store_groups / store_views at 1. The StoresFixture
+            early-exits when all three are <= 1, so the default website / store
+            / view created during setup:install is reused (no duplicates).
+        -->
+        <websites>1</websites>
+        <store_groups>1</store_groups>
+        <store_views>1</store_views>
+
+        <sources>1</sources> <!-- Number of sources to generate -->
+        <stocks>1</stocks> <!-- Number of stocks to generate -->
+        <assign_entities_to_all_websites>0</assign_entities_to_all_websites> <!-- Whether to assign all products per each website -->
+
+        <!-- ============ PRODUCTS ============ -->
+        <simple_products>1000</simple_products> <!-- Simple products count -->
+
+        <configurable_products> <!-- Configurable products with two configurable attributes -->
+            <config>
+                <attributes>
+                    <attribute>
+                        <options>3</options>
+                        <swatches>image</swatches>
+                    </attribute>
+                    <attribute>
+                        <options>8</options>
+                    </attribute>
+                </attributes>
+                <sku>Configurable Product %s</sku>
+                <products>30</products>
+            </config>
+        </configurable_products>
+
+        <!--
+            Bundle products: total products, options per product, simple
+            sub-products per option. With these numbers, 20 bundles each
+            offer 3 options containing 4 simple selections.
+        -->
+        <bundle_products>20</bundle_products>
+        <bundle_products_options>3</bundle_products_options>
+        <bundle_products_variation>4</bundle_products_variation>
+
+        <product-images>
+            <images-count>100</images-count>
+            <images-per-product>3</images-per-product>
+        </product-images>
+
+        <!-- ============ TAXONOMY & CUSTOMERS ============ -->
+        <categories>50</categories> <!-- Number of categories to generate -->
+        <categories_nesting_level>3</categories_nesting_level> <!-- Nesting level for categories -->
+        <customers>500</customers> <!-- Number of customers to generate -->
+
+        <!-- ============ PRICING / PROMOTIONS ============ -->
+        <catalog_price_rules>20</catalog_price_rules> <!-- Number of catalog price rules -->
+        <cart_price_rules>20</cart_price_rules> <!-- Number of cart price rules -->
+        <cart_price_rules_floor>2</cart_price_rules_floor>
+        <coupon_codes>20</coupon_codes> <!-- Number of coupon codes -->
+
+        <!-- ============ ATTRIBUTE SETS ============ -->
+        <product_attribute_sets>10</product_attribute_sets> <!-- Number of product attribute sets -->
+        <product_attribute_sets_attributes>5</product_attribute_sets_attributes> <!-- Number of attributes per set -->
+        <product_attribute_sets_attributes_values>5</product_attribute_sets_attributes_values> <!-- Number of values per attribute -->
+
+        <!-- ============ ORDERS ============ -->
+        <order_quotes_enable>true</order_quotes_enable>
+        <order_simple_product_count_from>2</order_simple_product_count_from>
+        <order_simple_product_count_to>4</order_simple_product_count_to>
+        <orders>200</orders> <!-- Orders count -->
+
+        <tax_rates_file>tax_rates_small.csv</tax_rates_file> <!-- Tax rates file in fixtures directory-->
+
+        <configs> <!-- Config variables and values for change -->
+            <config>
+                <path>admin/security/use_form_key</path>
+                <scope>default</scope>
+                <scopeId>0</scopeId>
+                <value>0</value>
+            </config>
+            <config>
+                <path>admin/security/session_lifetime</path>
+                <scope>default</scope>
+                <scopeId>0</scopeId>
+                <value>86400</value>
+            </config>
+            <config>
+                <path>admin/security/admin_account_sharing</path>
+                <scope>default</scope>
+                <scopeId>0</scopeId>
+                <value>1</value>
+            </config>
+            <config>
+                <path>carriers/flatrate/active</path>
+                <scope>default</scope>
+                <scopeId>0</scopeId>
+                <value>1</value>
+            </config>
+        </configs>
+        <indexers> <!-- Indexer mode value (true - Update by Schedule, false - Update on Save) -->
+            <indexer>
+                <id>catalog_category_product</id>
+                <set_scheduled>false</set_scheduled>
+            </indexer>
+            <indexer>
+                <id>catalog_product_category</id>
+                <set_scheduled>false</set_scheduled>
+            </indexer>
+            <indexer>
+                <id>catalog_product_price</id>
+                <set_scheduled>false</set_scheduled>
+            </indexer>
+            <indexer>
+                <id>catalog_product_attribute</id>
+                <set_scheduled>false</set_scheduled>
+            </indexer>
+            <indexer>
+                <id>cataloginventory_stock</id>
+                <set_scheduled>false</set_scheduled>
+            </indexer>
+            <indexer>
+                <id>catalogrule_rule</id>
+                <set_scheduled>false</set_scheduled>
+            </indexer>
+            <indexer>
+                <id>catalogrule_product</id>
+                <set_scheduled>false</set_scheduled>
+            </indexer>
+            <indexer>
+                <id>catalogsearch_fulltext</id>
+                <set_scheduled>false</set_scheduled>
+            </indexer>
+        </indexers>
+        <xi:include href="../../config/searchTermsLarge.xml" />
+        <xi:include href="../../config/attributeSets.xml" />
+        <xi:include href="../../config/searchConfig.xml" />
+        <xi:include href="../../config/customerConfig.xml" />
+        <xi:include href="../../config/description.xml" />
+        <xi:include href="../../config/shortDescription.xml" />
+    </profile>
+</config>
