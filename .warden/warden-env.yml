@@ -12,6 +12,7 @@ services:
     volumes:
       - .:/var/www/html:cached
       - ./.warden/php/zz-config.ini:/etc/php.d/zz-config.ini
+      - ./.warden/php/10-opcache.ini:/etc/php.d/10-opcache.ini
       - ./.warden/php-fpm/www.conf:/etc/php-fpm.d/www.conf
   # php-debug:
   #   volumes:
