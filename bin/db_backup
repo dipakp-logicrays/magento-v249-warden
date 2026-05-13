@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+#
+# Database Backup Script
+#
+# Dumps a Magento (or any) MySQL database from the Warden 'db' container
+# into ./backup/db/daily/DD-MM-YYYY/<dbname>_YYYYMMDD_HHMMSS.sql.gz.
+#
+# Usage:
+#   bin/db_backup [DB_NAME]
+#   bin/db_backup --help
+#
+# Arguments:
+#   DB_NAME    Database to back up. Defaults to "magento" (Warden + Magento
+#              setup:install default in this project). Override per call,
+#              e.g. `bin/db_backup mage249_test`.
+#
+# Environment overrides:
+#   DB_USER          mysql user                (default: magento)
+#   DB_PASS          mysql password            (default: magento)
+#   BACKUP_BASE_DIR  output root for dumps     (default: backup/db/daily)
+#
+# Run from the project root (so the relative BACKUP_BASE_DIR resolves correctly).
+
+set -euo pipefail
+
+# ----- argument parsing --------------------------------------------------
+
+case "${1:-}" in
+    -h|--help)
+        sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'
+        exit 0
+        ;;
+esac
+
+DB_NAME="${1:-magento}"
+DB_USER="${DB_USER:-magento}"
+DB_PASS="${DB_PASS:-magento}"
+BACKUP_BASE_DIR="${BACKUP_BASE_DIR:-backup/db/daily}"
+
+# ----- preflight ---------------------------------------------------------
+
+if ! command -v warden >/dev/null 2>&1; then
+    echo "✗ Error: 'warden' is not on PATH. Install Warden or run this from a shell that has it." >&2
+    exit 1
+fi
+
+# Verify the database exists before we attempt a dump
+DB_EXISTS=$(warden db connect -e \
+    "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '${DB_NAME}';" \
+    2>/dev/null | grep -c "${DB_NAME}" || true)
+
+if [ "${DB_EXISTS}" -eq 0 ]; then
+    echo "✗ Error: Database '${DB_NAME}' does not exist."
+    echo "Available databases:"
+    warden db connect -e "SHOW DATABASES;" 2>/dev/null
+    exit 1
+fi
+
+echo "Database: ${DB_NAME}"
+
+# ----- output paths ------------------------------------------------------
+
+CURRENT_DATE=$(date +%d-%m-%Y)
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="${BACKUP_BASE_DIR}/${CURRENT_DATE}"
+BACKUP_FILE="${BACKUP_DIR}/${DB_NAME}_${TIMESTAMP}.sql"
+
+if ! mkdir -p "${BACKUP_DIR}"; then
+    echo "✗ Error: Failed to create backup directory: ${BACKUP_DIR}" >&2
+    exit 1
+fi
+echo "Backup directory created/verified: ${BACKUP_DIR}"
+
+# ----- dump --------------------------------------------------------------
+# --no-tablespaces: avoids PROCESS privilege error
+# 2>/dev/null on mysqldump suppresses the "password on command line" warning
+echo "Exporting database '${DB_NAME}' to ${BACKUP_FILE}..."
+if ! warden env exec -T db mysqldump \
+        -u"${DB_USER}" -p"${DB_PASS}" \
+        --no-tablespaces \
+        "${DB_NAME}" 2>/dev/null > "${BACKUP_FILE}"; then
+    echo "✗ Error: Failed to export database" >&2
+    rm -f "${BACKUP_FILE}"
+    exit 1
+fi
+echo "✓ Database exported successfully"
+
+# ----- compress ----------------------------------------------------------
+
+echo "Compressing database backup..."
+if ! gzip -f "${BACKUP_FILE}"; then
+    echo "✗ Error: Failed to compress backup file" >&2
+    exit 1
+fi
+
+# Human-readable size for the compressed dump
+FILE_SIZE=$(stat -c%s "${BACKUP_FILE}.gz")
+if   (( FILE_SIZE >= 1073741824 )); then
+    SIZE_FORMATTED=$(awk "BEGIN {printf \"%.2f GB\", ${FILE_SIZE}/1073741824}")
+elif (( FILE_SIZE >= 1048576 ));   then
+    SIZE_FORMATTED=$(awk "BEGIN {printf \"%.2f MB\", ${FILE_SIZE}/1048576}")
+elif (( FILE_SIZE >= 1024 ));      then
+    SIZE_FORMATTED=$(awk "BEGIN {printf \"%.2f KB\", ${FILE_SIZE}/1024}")
+else
+    SIZE_FORMATTED="${FILE_SIZE} bytes"
+fi
+
+echo "✓ Database backup compressed successfully: ${BACKUP_FILE}.gz (${SIZE_FORMATTED})"
+echo "✓ Backup complete!"
