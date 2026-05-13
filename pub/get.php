@@ -86,8 +86,26 @@ if (file_exists($configCacheFile) && is_readable($configCacheFile)) {
     }
 }
 
+// CUSTOM: bootstrap once to read deployment config so we can resolve the website context.
+$bootstrap = $createBootstrap($_SERVER);
+$objectManager = $bootstrap->getObjectManager();
+
+// CUSTOM: look up HTTP_HOST against the website_configuration map in env.php.
+$deploymentConfig = $objectManager->get(\Magento\Framework\App\DeploymentConfig::class);
+$websiteConfiguration = $deploymentConfig->get('website_configuration');
+
+$params = $_SERVER;
+if (is_array($websiteConfiguration)) {
+    foreach ($websiteConfiguration as $website) {
+        if ($_SERVER['HTTP_HOST'] === $website['domain']) {
+            $params[\Magento\Store\Model\StoreManager::PARAM_RUN_CODE] = $website['run_code'];
+            $params[\Magento\Store\Model\StoreManager::PARAM_RUN_TYPE] = $website['run_type'];
+            break;
+        }
+    }
+}
+
 // Materialize file in application
-$params = [];
 if (empty($mediaDirectory)) {
     $params[ObjectManagerFactory::INIT_PARAM_DEPLOYMENT_CONFIG] = [];
     $params[Factory::PARAM_CACHE_FORCED_OPTIONS] = ['frontend_options' => ['disable_save' => true]];
