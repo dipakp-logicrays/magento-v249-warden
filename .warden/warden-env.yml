@@ -1,8 +1,12 @@
 services:
   php-fpm:
+    # When adding additional websites/store views:
+    #   1. Append the new hostname here (extra_hosts).
+    #   2. Append a Host(`...`) clause to the nginx traefik rule below.
+    #   3. Add an entry to 'website_configuration' in app/etc/env.php.
+    #   4. Run bin/magento config:set --scope=websites --scope-code=<code>
+    #      web/{un,}secure/base_url so storefront links render the right host.
     extra_hosts:
-      # Add additional storefront/admin hostnames here as your Luma demo grows, e.g.:
-      # - app.${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}
       - ${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}
       - app.${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}
       - status.${TRAEFIK_DOMAIN}:${TRAEFIK_ADDRESS:-0.0.0.0}

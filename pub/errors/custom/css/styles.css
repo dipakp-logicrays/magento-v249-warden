@@ -1,0 +1,177 @@
+/**
+
+* Copyright © Magento, Inc. All rights reserved.
+
+* See COPYING.txt for license details.
+
+*/
+
+
+
+
+body {
+    font-family: 'Indie Flower', cursive;
+
+
+    display: block;
+
+    max-width: 750px;
+
+    background: #fff;
+
+    font-size: 23px;
+
+    line-height: 1.5;
+
+    margin: 0 auto;
+
+    padding-top: 70px;
+
+    text-align: left;
+
+}
+
+a {
+
+    color: #000;
+
+    text-decoration: none;
+
+}
+
+a:hover {
+
+    color: #ff9416;
+
+    text-decoration: none;
+
+}
+
+h1 {
+
+    font-size: 50px;
+
+    font-weight: 700;
+
+    margin: 0 0 20px;
+
+}
+
+h2 {
+
+    font-size: 30px;
+
+    font-weight: 700;
+
+    margin: 0 0 10px;
+
+}
+
+.animation{
+    margin-top:70px;
+    display:inline-block;
+    margin-bottom:40px;
+}
+.one, .two, .three {
+    display:block;
+    float:left;
+}
+.one {
+    background: url('../images/cog1.svg');
+    width:80px;
+    height:80px;
+    background-size:100% 100%;
+    background-repeat:no-repeat;
+    margin-top:-10px;
+    margin-right:8px;
+}
+.two {
+    background: url('../images/cog2.svg');
+    width:100px;
+    height:100px;
+    background-size:100% 100%;
+    background-repeat:no-repeat;
+}
+.three {
+    background: url('../images/cog1.svg');
+    width:80px;
+    height:80px;
+    background-size:100% 100%;
+    background-repeat:no-repeat;
+    margin-top:-50px;
+    margin-left:-10px;
+}
+.spin-one {
+    -webkit-animation: spin-one 7.5s infinite linear;
+    animation: spin-one 7.5s infinite linear;
+}
+@keyframes spin-one {
+    0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(-359deg);
+        transform: rotate(-359deg);
+    }
+}
+.spin-two {
+    -webkit-animation: spin-two 8s infinite linear;
+    animation: spin-two 8s infinite linear;
+}
+@keyframes spin-two {
+    0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(-359deg);
+        transform: rotate(359deg);
+    }
+}
+
+.center-div
+{
+    margin: 0 auto;
+    max-width: 700px;
+    height: 100px;
+    background-color: #ccc;
+    border-radius: 3px;
+}
+
+#parentContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.center {
+    text-align: center;
+}
+
+.orange {
+    color: #ff9416;
+
+}
+
+p {
+    margin: 3px;
+}
+
+.quote,
+.sign {
+    margin: 0px;
+}
+
+.sign {
+    /*font-family: 'Roboto', sans-serif;*/
+    font-family: 'Pacifico', cursive;
+}
+
+.flower {
+    font-family: 'Indie Flower', cursive;
+}
+
+#phone-image {
+    width: 75px
+}

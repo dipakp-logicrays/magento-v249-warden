@@ -3,6 +3,16 @@ return [
     'backend' => [
         'frontName' => 'admin'
     ],
+    // Domain -> website/store mapping consumed by pub/index.php and pub/get.php.
+    // Append entries here as additional websites/store views are added.
+    //   'run_type' is either 'website' or 'store' (store view code).
+    'website_configuration' => [
+        [
+            'domain' => 'app.mage249.test',
+            'run_code' => 'base',
+            'run_type' => 'website'
+        ]
+    ],
     'remote_storage' => [
         'driver' => 'file'
     ],
